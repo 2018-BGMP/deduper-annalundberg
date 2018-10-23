@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+
+'''deduper pseudocode for BGMP Bi624
+Given a SAM file of uniquely mapped reads: remove all PCR duplicates, leaving
+only a single copy of each read.
+Algorithm should avoid loading everything into memory.
+Algorithm should be designed for single-end data with 96 UMIs
+Records with matching UMI, chromosome, position and strand are duplicates'''
+
+#lets use samtools to organize our original sam file
+samtools view -S -b original.sam > original.bam #convert to bam file
+samtools sort original.bam -o original.sorted.bam #sort reads by alignment order
+for each chromosome:
+  samtools view -b original.sorted.bam chr__ > chr__.bam #sort reads into new files by chromosome
+samtools view to conver all bam files to sam files
+##resulting files are sam reads split into different files by chromosome and strand
+
+
+define a fxn that will make an UMI dictionary to hold individual UMI
+  dictionaries, containing only the 96 valid UMIs
+init umi_dict
+open umi_file:
+    for umi in file:
+        init an umi_specific_dict
+        master_umi_dict[umi]=umi_specific_dict
+            e.g. AAA: -> AAA_dict= {} #will fill specific dict later
+return umi dictionary
+
+Define function to determine which of duplicate reads is best given list of SAM
+  file lines
+init avg_quality = 0
+init cigar_matches = 0
+iterate through list:
+  if quality index avg > avg_quality:
+      cigar=index_to_cigar_string
+      find number matches/mismatches (probably use reg.ex)
+          if m/m > cigar_matches
+              best_read = this_line
+return best_read(string)
+
+define fxn that will make a dictionary holding a window of 30 reads to look for
+  duplicates. If no duplicates in window, write to new_SAM_file, otherwise Use
+  choosing between dupes fxn, then write.
+init line counter
+init line dict
+open SAM file of uniquely mapped reads, for specific chromosome
+    iterate through each line:
+        increment line counter
+        init dup_list=[]
+        find UMI in Qname (end of header) by indexing
+            if UMI not one of expected 96 UMIs in dict:
+                error check or discard error UMIs
+                    If discarding select break to avoid next steps
+            if good UMI:
+                key = remainder of line_count/30
+                line_dict[key] = line containing read
+                dup_list.append(line)
+                iterate through line_dict entries:
+                    does line[UMI] match entry? if no, continue
+                    if yes:
+                        if strand matches:
+                            if position matches:
+                                add line_dict value to dup_list
+                            if position doesn't match:
+                                check cigar string, adjust for soft clipping
+                                if position now matches, append to dup_list
+                if dup_list length = 1:
+                    write dup_list[0] to new_SAM_file
+                if dup_list length > 1:
+                    choose between duplicates function
+                    write winner to new_SAM_file
+return new_SAM_file(name as string)
+
+define main fxn:
+  init empty list for file_name strings
+  call above defined fxns for each chrom_specific sam file
+  append each file_name to list
+return list_file_names
+
+call main fxn
