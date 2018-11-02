@@ -1,15 +1,5 @@
 #!/usr/bin/env python
 
-#SBATCH --partition=short
-#SBATCH --job-name=dedup_p3
-#SBATCH --time=0-01:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=104000M
-#SBATCH --mail-user=annalundberg92@gmail.com
-#SBATCH --mail-type=BEGIN,END,FAIL
-
 '''deduper pseudocode for BGMP Bi624
 Given a SAM file of uniquely mapped reads: remove all PCR duplicates, leaving
 only a single copy of each read.
