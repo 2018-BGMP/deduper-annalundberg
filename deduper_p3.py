@@ -29,6 +29,7 @@ def mk_umi_dict(u_file):
     umi_dict={}
     with open(u_file) as umis:
         for umi in umis:
+            umi=umi.strip('\n')
             umi_dict[umi]=''
     return umi_dict
 
@@ -59,8 +60,6 @@ def pos_correct(pos, cigar, strand):
         pos=pos+adj-1
         if len(soft_cig)==1:
             pos+=int(soft_cig[0])
-
-        #pos = pos + M + N + D + S - 1(for original start positon)
     return pos
 
 def check_dup(chrom_dict, umi, pos, strand):
@@ -87,7 +86,9 @@ def filter_sam(file,u_flag, u_dict):
     read is discared. uses check_dup to check for duplicate reads, and writes
     only the first entry of each identity to a new_file.sam'''
     chrom=''
-    with open(file) as sam, open('deduped_'+file, 'w') as new_sam:
+    newfile=file.split('/')
+    newfile = 'deduped_'+newfile[-1]
+    with open(file) as sam, open(newfile, 'w') as new_sam:
         for line in sam:
             if line.startswith('@')==False:
                 read_l=line.split('\t')
@@ -101,7 +102,7 @@ def filter_sam(file,u_flag, u_dict):
                 pos = pos_correct(pos,cigar,strand)
                 if u_flag:
                     if umi in u_dict:
-                        dup, read_l = check_dup(chrom_dict, umi, pos, strand)
+                        dup = check_dup(chrom_dict, umi, pos, strand)
                     else:
                         dup = True
                 else:
@@ -109,7 +110,7 @@ def filter_sam(file,u_flag, u_dict):
                 if dup == False:
                     new_sam.write(line) #non duplicate, add entry to new_file
                     chrom_dict[umi]=[pos,strand]
-    return 'deduped_'+file
+    return newfile
 
 
 def main():
@@ -126,6 +127,6 @@ def main():
         umi_dict = mk_umi_dict(args.umi_file)
         flag=True
     newfile_name = filter_sam(args.filename,flag,umi_dict)
-    return newfile_name
+    return print(newfile_name)
 
 main()
